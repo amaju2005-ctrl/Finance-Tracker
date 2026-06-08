@@ -3,349 +3,582 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Financial Review — May 2026</title>
+<title>Personal Finance Tracker</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; }
 
-  .header { background: linear-gradient(135deg, #1a1f2e 0%, #16213e 100%); border-bottom: 1px solid #2d3748; padding: 28px 32px 24px; }
-  .header-top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; }
-  .header h1 { font-size: 22px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
-  .header .subtitle { font-size: 13px; color: #718096; margin-top: 2px; }
-  .verdict { padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+  /* ── Nav ── */
+  .nav { background: #1a1f2e; border-bottom: 1px solid #2d3748; padding: 0 28px; display: flex; align-items: center; gap: 0; }
+  .nav-brand { font-size: 15px; font-weight: 700; color: #fff; padding: 18px 0; margin-right: 28px; white-space: nowrap; }
+  .nav-brand span { color: #63b3ed; }
+  .tab-btn { padding: 18px 18px; font-size: 13px; font-weight: 500; color: #718096; background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
+  .tab-btn.active { color: #63b3ed; border-bottom-color: #63b3ed; }
+  .tab-btn:hover:not(.active) { color: #e2e8f0; }
+
+  /* ── Panels ── */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ═══════════════════ INPUT PANEL ═══════════════════ */
+  .input-wrap { max-width: 800px; margin: 0 auto; padding: 28px 24px 60px; }
+  .input-wrap h2 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #718096; margin: 28px 0 12px; }
+  .input-wrap h2:first-of-type { margin-top: 0; }
+
+  .section-card { background: #1a1f2e; border: 1px solid #2d3748; border-radius: 10px; padding: 18px 20px; margin-bottom: 6px; }
+
+  .field-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .field-row:last-child { margin-bottom: 0; }
+  .field-row.three { grid-template-columns: 1fr 1fr auto; }
+  .field-row.four { grid-template-columns: 2fr 1fr 1fr auto; }
+
+  label { font-size: 12px; color: #718096; display: block; margin-bottom: 3px; }
+  input[type="text"], input[type="number"], select {
+    background: #0f1117; border: 1px solid #2d3748; border-radius: 6px;
+    color: #e2e8f0; font-size: 13px; padding: 7px 10px; width: 100%;
+    outline: none; transition: border 0.15s;
+  }
+  input[type="text"]:focus, input[type="number"]:focus, select:focus { border-color: #63b3ed; }
+  input[type="number"] { -moz-appearance: textfield; }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  .field-group { }
+  .field-group label { margin-bottom: 3px; }
+
+  .btn-remove { background: rgba(252,129,129,0.1); border: 1px solid rgba(252,129,129,0.2); color: #fc8181; border-radius: 6px; width: 30px; height: 30px; cursor: pointer; font-size: 16px; line-height: 1; display: flex; align-items: center; justify-content: center; flex-shrink: 0; align-self: flex-end; margin-bottom: 0; }
+  .btn-remove:hover { background: rgba(252,129,129,0.2); }
+  .btn-add { background: rgba(99,179,237,0.08); border: 1px solid rgba(99,179,237,0.2); color: #63b3ed; border-radius: 6px; padding: 7px 14px; font-size: 12px; cursor: pointer; margin-top: 10px; transition: background 0.15s; }
+  .btn-add:hover { background: rgba(99,179,237,0.15); }
+
+  .currency-hint { font-size: 11px; color: #4a5568; margin-top: 6px; }
+
+  .submit-bar { position: sticky; bottom: 0; background: #0f1117; border-top: 1px solid #2d3748; padding: 14px 24px; display: flex; justify-content: flex-end; gap: 10px; }
+  .btn-primary { background: #63b3ed; color: #0f1117; border: none; border-radius: 8px; padding: 10px 24px; font-size: 14px; font-weight: 700; cursor: pointer; transition: background 0.15s; }
+  .btn-primary:hover { background: #90cdf4; }
+  .btn-secondary { background: transparent; color: #718096; border: 1px solid #2d3748; border-radius: 8px; padding: 10px 18px; font-size: 13px; cursor: pointer; }
+  .btn-secondary:hover { color: #e2e8f0; }
+
+  .period-row { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+  .period-row label { margin: 0; font-size: 13px; color: #cbd5e0; }
+  .period-row input[type="text"] { max-width: 180px; }
+
+  /* ═══════════════════ DASHBOARD PANEL ═══════════════════ */
+  .dash-empty { text-align: center; padding: 80px 24px; color: #4a5568; }
+  .dash-empty h3 { font-size: 18px; color: #718096; margin-bottom: 10px; }
+  .dash-empty p { font-size: 14px; line-height: 1.6; }
+
+  .dash-header { background: linear-gradient(135deg, #1a1f2e 0%, #16213e 100%); border-bottom: 1px solid #2d3748; padding: 22px 28px 20px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; }
+  .dash-header h1 { font-size: 20px; font-weight: 700; color: #fff; }
+  .dash-header .sub { font-size: 12px; color: #718096; margin-top: 2px; }
+  .verdict { padding: 5px 13px; border-radius: 20px; font-size: 12px; font-weight: 600; flex-shrink: 0; }
   .verdict.green { background: rgba(72,187,120,0.15); color: #68d391; border: 1px solid rgba(72,187,120,0.3); }
   .verdict.amber { background: rgba(237,137,54,0.15); color: #f6ad55; border: 1px solid rgba(237,137,54,0.3); }
+  .verdict.red { background: rgba(252,129,129,0.15); color: #fc8181; border: 1px solid rgba(252,129,129,0.3); }
 
-  .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; padding: 24px 32px; background: #0f1117; }
-  .kpi { background: #1a1f2e; border: 1px solid #2d3748; border-radius: 10px; padding: 16px 18px; }
-  .kpi .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: #718096; margin-bottom: 6px; }
-  .kpi .value { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+  .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 10px; padding: 20px 28px; }
+  .kpi { background: #1a1f2e; border: 1px solid #2d3748; border-radius: 10px; padding: 14px 16px; }
+  .kpi .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #718096; margin-bottom: 5px; }
+  .kpi .val { font-size: 22px; font-weight: 700; letter-spacing: -0.4px; }
   .kpi .sub { font-size: 11px; color: #718096; margin-top: 3px; }
-  .green { color: #68d391; }
-  .amber { color: #f6ad55; }
-  .red { color: #fc8181; }
-  .blue { color: #63b3ed; }
-  .purple { color: #b794f4; }
 
-  .main { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 0 32px 32px; }
-  @media (max-width: 900px) { .main { grid-template-columns: 1fr; } }
+  .dash-main { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 0 28px 40px; }
+  @media(max-width:800px){ .dash-main { grid-template-columns: 1fr; } }
 
-  .card { background: #1a1f2e; border: 1px solid #2d3748; border-radius: 12px; padding: 22px; }
-  .card h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: #718096; margin-bottom: 18px; }
-  .card.full-width { grid-column: 1 / -1; }
+  .card { background: #1a1f2e; border: 1px solid #2d3748; border-radius: 12px; padding: 20px; }
+  .card h2 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: #718096; margin-bottom: 16px; }
+  .card.full { grid-column: 1 / -1; }
 
-  /* Spending breakdown */
-  .cat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-  .cat-label { width: 160px; font-size: 13px; color: #cbd5e0; flex-shrink: 0; }
-  .cat-bar-wrap { flex: 1; background: #2d3748; border-radius: 4px; height: 8px; overflow: hidden; }
-  .cat-bar { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
-  .cat-amount { width: 65px; text-align: right; font-size: 13px; font-weight: 600; color: #e2e8f0; }
-  .cat-pct { width: 38px; text-align: right; font-size: 11px; color: #718096; }
+  .cat-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .cat-lbl { width: 140px; font-size: 12px; color: #cbd5e0; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-wrap { flex: 1; background: #2d3748; border-radius: 4px; height: 7px; overflow: hidden; }
+  .bar { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+  .cat-amt { width: 70px; text-align: right; font-size: 12px; font-weight: 600; }
+  .cat-pct { width: 34px; text-align: right; font-size: 11px; color: #718096; }
 
-  /* Goals */
-  .goal-row { margin-bottom: 18px; }
-  .goal-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
-  .goal-name { font-size: 13px; color: #cbd5e0; font-weight: 500; }
-  .goal-pct { font-size: 13px; font-weight: 700; }
-  .goal-bar-wrap { background: #2d3748; border-radius: 6px; height: 10px; overflow: hidden; margin-bottom: 4px; }
-  .goal-bar { height: 100%; border-radius: 6px; }
+  .goal-row { margin-bottom: 16px; }
+  .goal-row:last-child { margin-bottom: 0; }
+  .goal-hdr { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+  .goal-name { font-size: 12px; color: #cbd5e0; font-weight: 500; }
+  .goal-pct { font-size: 12px; font-weight: 700; }
+  .goal-bar-wrap { background: #2d3748; border-radius: 6px; height: 8px; overflow: hidden; margin-bottom: 3px; }
+  .goal-bar { height: 100%; border-radius: 6px; max-width: 100%; }
   .goal-detail { font-size: 11px; color: #718096; }
 
-  /* Flags */
-  .flag { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 8px; margin-bottom: 10px; }
-  .flag.red-flag { background: rgba(252,129,129,0.08); border: 1px solid rgba(252,129,129,0.2); }
-  .flag.amber-flag { background: rgba(246,173,85,0.08); border: 1px solid rgba(246,173,85,0.2); }
-  .flag.green-flag { background: rgba(104,211,145,0.08); border: 1px solid rgba(104,211,145,0.2); }
-  .flag .icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
-  .flag .text { font-size: 13px; line-height: 1.5; color: #cbd5e0; }
-  .flag .text strong { color: #e2e8f0; }
+  .flag { display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; border-radius: 8px; margin-bottom: 8px; }
+  .flag:last-child { margin-bottom: 0; }
+  .flag.r { background: rgba(252,129,129,0.07); border: 1px solid rgba(252,129,129,0.2); }
+  .flag.a { background: rgba(246,173,85,0.07); border: 1px solid rgba(246,173,85,0.2); }
+  .flag.g { background: rgba(104,211,145,0.07); border: 1px solid rgba(104,211,145,0.2); }
+  .flag .icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .flag .txt { font-size: 12px; line-height: 1.5; color: #cbd5e0; }
+  .flag .txt strong { color: #e2e8f0; }
 
-  /* ISA positions */
-  .position-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #2d3748; }
-  .position-row:last-child { border-bottom: none; }
-  .pos-ticker { font-size: 13px; font-weight: 700; color: #e2e8f0; width: 60px; }
-  .pos-name { font-size: 12px; color: #718096; flex: 1; }
-  .pos-return { font-size: 13px; font-weight: 600; text-align: right; }
-  .pos-value { font-size: 13px; font-weight: 600; color: #e2e8f0; text-align: right; width: 75px; }
+  .divider { height: 1px; background: #2d3748; margin: 12px 0; }
+  .row-sb { display: flex; justify-content: space-between; font-size: 12px; margin-top: 8px; }
+  .row-sb span:first-child { color: #718096; }
+  .row-sb span:last-child { font-weight: 600; color: #e2e8f0; }
 
-  .divider { height: 1px; background: #2d3748; margin: 14px 0; }
+  .chart-wrap { position: relative; height: 220px; }
 
-  .insight { padding: 10px 0; border-bottom: 1px solid #2d3748; }
+  .green { color: #68d391; } .amber { color: #f6ad55; } .red { color: #fc8181; } .blue { color: #63b3ed; } .purple { color: #b794f4; }
+
+  .insight { padding: 9px 0; border-bottom: 1px solid #2d3748; }
   .insight:last-child { border-bottom: none; }
-  .insight p { font-size: 13px; line-height: 1.6; color: #cbd5e0; }
+  .insight p { font-size: 12px; line-height: 1.6; color: #cbd5e0; }
   .insight p strong { color: #e2e8f0; }
 
-  .win-box { background: linear-gradient(135deg, rgba(104,211,145,0.1), rgba(99,179,237,0.1)); border: 1px solid rgba(104,211,145,0.25); border-radius: 10px; padding: 16px 18px; margin-top: 6px; }
-  .win-box .win-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #68d391; margin-bottom: 6px; }
-  .win-box p { font-size: 13px; color: #cbd5e0; line-height: 1.6; }
+  .win-box { background: linear-gradient(135deg,rgba(104,211,145,0.1),rgba(99,179,237,0.1)); border: 1px solid rgba(104,211,145,0.25); border-radius: 8px; padding: 14px 16px; margin-top: 6px; }
+  .win-box .wt { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #68d391; margin-bottom: 5px; }
+  .win-box p { font-size: 12px; color: #cbd5e0; line-height: 1.6; }
+
+  .edit-btn { background: rgba(99,179,237,0.1); border: 1px solid rgba(99,179,237,0.2); color: #63b3ed; border-radius: 6px; padding: 5px 12px; font-size: 12px; cursor: pointer; }
+  .edit-btn:hover { background: rgba(99,179,237,0.18); }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="header-top">
+<div class="nav">
+  <div class="nav-brand">💷 Finance<span>Tracker</span></div>
+  <button class="tab-btn active" onclick="switchTab('input')">📝 Enter Figures</button>
+  <button class="tab-btn" onclick="switchTab('dashboard')" id="dashTab">📊 Dashboard</button>
+</div>
+
+<!-- ═══════════════════════ INPUT PANEL ═══════════════════════ -->
+<div class="panel active" id="inputPanel">
+  <div class="input-wrap">
+
+    <div class="period-row">
+      <label>Period / Month</label>
+      <input type="text" id="period" placeholder="e.g. June 2026" maxlength="30">
+      <label style="margin-left:8px;">Currency symbol</label>
+      <input type="text" id="currency" placeholder="£" maxlength="3" style="max-width:60px;">
+    </div>
+
+    <!-- INCOME -->
+    <h2>💰 Income</h2>
+    <div class="section-card" id="incomeList"></div>
+    <button class="btn-add" onclick="addRow('income')">+ Add income source</button>
+
+    <!-- SPENDING -->
+    <h2>🛒 Spending by Category</h2>
+    <div class="section-card" id="spendList"></div>
+    <button class="btn-add" onclick="addRow('spend')">+ Add category</button>
+
+    <!-- SAVINGS -->
+    <h2>💾 Savings & Investments</h2>
+    <div class="section-card" id="savingsList"></div>
+    <button class="btn-add" onclick="addRow('savings')">+ Add savings item</button>
+
+    <!-- NET WORTH -->
+    <h2>📊 Net Worth Components</h2>
+    <p class="currency-hint" style="margin-bottom:8px;">Include all accounts, ISAs, investments, cash, property equity, etc.</p>
+    <div class="section-card" id="nwList"></div>
+    <button class="btn-add" onclick="addRow('nw')">+ Add account</button>
+
+    <!-- GOALS -->
+    <h2>🎯 Goals</h2>
+    <div class="section-card" id="goalsList"></div>
+    <button class="btn-add" onclick="addRow('goals')">+ Add goal</button>
+
+  </div>
+  <div class="submit-bar">
+    <button class="btn-secondary" onclick="clearAll()">Clear all</button>
+    <button class="btn-primary" onclick="buildDashboard()">Generate Dashboard →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════ DASHBOARD PANEL ═══════════════════════ -->
+<div class="panel" id="dashPanel">
+  <div id="dashContent">
+    <div class="dash-empty">
+      <h3>No data yet</h3>
+      <p>Fill in your figures on the <strong>Enter Figures</strong> tab<br>and click <strong>Generate Dashboard</strong>.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+const state = {
+  income: [],
+  spend: [],
+  savings: [],
+  nw: [],
+  goals: []
+};
+
+const DEFAULTS = {
+  income: [
+    { label: 'Salary / Main income', amount: '' },
+    { label: 'Side income', amount: '' },
+  ],
+  spend: [
+    { label: '🍜 Dining Out', amount: '', budget: '' },
+    { label: '🛒 Groceries', amount: '', budget: '' },
+    { label: '📱 Subscriptions', amount: '', budget: '' },
+    { label: '🚗 Transport', amount: '', budget: '' },
+    { label: '🎾 Entertainment', amount: '', budget: '' },
+    { label: '🏠 Rent / Bills', amount: '', budget: '' },
+  ],
+  savings: [
+    { label: 'Stocks & Shares ISA', amount: '' },
+    { label: 'Cash ISA / Savings account', amount: '' },
+    { label: 'Regular saver / Round-ups', amount: '' },
+  ],
+  nw: [
+    { label: 'Cash savings', amount: '' },
+    { label: 'Stocks & Shares ISA', amount: '' },
+    { label: 'Cash ISA', amount: '' },
+    { label: 'Current account', amount: '' },
+  ],
+  goals: [
+    { label: 'Emergency Fund', current: '', target: '' },
+    { label: 'S&S ISA Phase 1', current: '', target: '' },
+  ]
+};
+
+// ── Row builders ──────────────────────────────────────────────────────────
+function makeIncomeRow(i, d = {}) {
+  return `<div class="field-row" id="income-row-${i}">
+    <div class="field-group"><label>Source</label><input type="text" id="income-lbl-${i}" placeholder="e.g. Salary" value="${esc(d.label||'')}"></div>
+    <div class="field-group"><label>Amount</label><input type="number" id="income-amt-${i}" placeholder="0" value="${d.amount||''}"></div>
+    <button class="btn-remove" onclick="removeRow('income',${i})" title="Remove">×</button>
+  </div>`;
+}
+function makeSpendRow(i, d = {}) {
+  return `<div class="field-row four" id="spend-row-${i}">
+    <div class="field-group"><label>Category</label><input type="text" id="spend-lbl-${i}" placeholder="e.g. Dining Out" value="${esc(d.label||'')}"></div>
+    <div class="field-group"><label>Actual</label><input type="number" id="spend-amt-${i}" placeholder="0" value="${d.amount||''}"></div>
+    <div class="field-group"><label>Budget (opt.)</label><input type="number" id="spend-bud-${i}" placeholder="0" value="${d.budget||''}"></div>
+    <button class="btn-remove" onclick="removeRow('spend',${i})" title="Remove">×</button>
+  </div>`;
+}
+function makeSavingsRow(i, d = {}) {
+  return `<div class="field-row" id="savings-row-${i}">
+    <div class="field-group"><label>Item</label><input type="text" id="savings-lbl-${i}" placeholder="e.g. ISA contribution" value="${esc(d.label||'')}"></div>
+    <div class="field-group"><label>Amount</label><input type="number" id="savings-amt-${i}" placeholder="0" value="${d.amount||''}"></div>
+    <button class="btn-remove" onclick="removeRow('savings',${i})" title="Remove">×</button>
+  </div>`;
+}
+function makeNwRow(i, d = {}) {
+  return `<div class="field-row" id="nw-row-${i}">
+    <div class="field-group"><label>Account / Asset</label><input type="text" id="nw-lbl-${i}" placeholder="e.g. Cash savings" value="${esc(d.label||'')}"></div>
+    <div class="field-group"><label>Balance</label><input type="number" id="nw-amt-${i}" placeholder="0" value="${d.amount||''}"></div>
+    <button class="btn-remove" onclick="removeRow('nw',${i})" title="Remove">×</button>
+  </div>`;
+}
+function makeGoalsRow(i, d = {}) {
+  return `<div class="field-row four" id="goals-row-${i}">
+    <div class="field-group"><label>Goal name</label><input type="text" id="goals-lbl-${i}" placeholder="e.g. Emergency Fund" value="${esc(d.label||'')}"></div>
+    <div class="field-group"><label>Current balance</label><input type="number" id="goals-cur-${i}" placeholder="0" value="${d.current||''}"></div>
+    <div class="field-group"><label>Target</label><input type="number" id="goals-tgt-${i}" placeholder="0" value="${d.target||''}"></div>
+    <button class="btn-remove" onclick="removeRow('goals',${i})" title="Remove">×</button>
+  </div>`;
+}
+
+const MAKERS = { income: makeIncomeRow, spend: makeSpendRow, savings: makeSavingsRow, nw: makeNwRow, goals: makeGoalsRow };
+const CONTAINERS = { income: 'incomeList', spend: 'spendList', savings: 'savingsList', nw: 'nwList', goals: 'goalsList' };
+const COUNTERS = { income: 0, spend: 0, savings: 0, nw: 0, goals: 0 };
+
+function addRow(type, data = {}) {
+  const id = COUNTERS[type]++;
+  state[type].push(id);
+  const el = document.getElementById(CONTAINERS[type]);
+  const div = document.createElement('div');
+  div.innerHTML = MAKERS[type](id, data);
+  el.appendChild(div.firstElementChild);
+}
+function removeRow(type, id) {
+  const el = document.getElementById(`${type}-row-${id}`);
+  if (el) el.remove();
+  state[type] = state[type].filter(x => x !== id);
+}
+
+function esc(s) { return String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+function v(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function n(id) { const val = parseFloat(v(id)); return isNaN(val) ? 0 : val; }
+
+function clearAll() {
+  if (!confirm('Clear all entered data?')) return;
+  ['income','spend','savings','nw','goals'].forEach(t => {
+    document.getElementById(CONTAINERS[t]).innerHTML = '';
+    state[t] = [];
+  });
+  initDefaults();
+}
+
+function initDefaults() {
+  Object.entries(DEFAULTS).forEach(([type, rows]) => {
+    rows.forEach(d => addRow(type, d));
+  });
+}
+
+// ── Read inputs ───────────────────────────────────────────────────────────
+function readData() {
+  const cur = v('currency') || '£';
+  const period = v('period') || 'This Month';
+
+  const income = state.income.map(i => ({ label: v(`income-lbl-${i}`) || 'Income', amount: n(`income-amt-${i}`) })).filter(r => r.amount > 0 || r.label !== 'Income');
+  const spend = state.spend.map(i => ({ label: v(`spend-lbl-${i}`) || 'Other', amount: n(`spend-amt-${i}`), budget: n(`spend-bud-${i}`) })).filter(r => r.amount > 0 || r.label !== 'Other');
+  const savings = state.savings.map(i => ({ label: v(`savings-lbl-${i}`) || 'Savings', amount: n(`savings-amt-${i}`) })).filter(r => r.amount > 0);
+  const nw = state.nw.map(i => ({ label: v(`nw-lbl-${i}`) || 'Account', amount: n(`nw-amt-${i}`) })).filter(r => r.amount > 0);
+  const goals = state.goals.map(i => ({ label: v(`goals-lbl-${i}`) || 'Goal', current: n(`goals-cur-${i}`), target: n(`goals-tgt-${i}`) })).filter(r => r.target > 0);
+
+  return { cur, period, income, spend, savings, nw, goals };
+}
+
+// ── Format ─────────────────────────────────────────────────────────────────
+function fmt(cur, n) {
+  if (Math.abs(n) >= 1000) return cur + n.toLocaleString('en-GB', {maximumFractionDigits:0});
+  return cur + n.toFixed(0);
+}
+
+// ── Category colours ───────────────────────────────────────────────────────
+const BAR_COLORS = ['#fc8181','#f6ad55','#fbd38d','#68d391','#63b3ed','#76e4f7','#b794f4','#f687b3','#fc8181','#f6ad55'];
+const CSS_COLORS = ['red','amber','amber','green','blue','blue','purple','amber'];
+
+function catColor(pct, idx) {
+  if (pct >= 40) return '#fc8181';
+  if (pct >= 25) return '#f6ad55';
+  return BAR_COLORS[idx % BAR_COLORS.length];
+}
+function catCss(pct, idx) {
+  if (pct >= 40) return 'red';
+  if (pct >= 25) return 'amber';
+  return CSS_COLORS[idx % CSS_COLORS.length];
+}
+
+// ── Goal colour ────────────────────────────────────────────────────────────
+function goalColor(pct) {
+  if (pct >= 100) return '#68d391';
+  if (pct >= 60) return '#63b3ed';
+  if (pct >= 30) return '#f6ad55';
+  return '#fc8181';
+}
+
+// ── Auto flags ────────────────────────────────────────────────────────────
+function autoFlags(data, totalIncome, totalSpend, totalSaved, savingsRate) {
+  const { cur, spend } = data;
+  const flags = [];
+
+  if (savingsRate < 5 && totalIncome > 0) flags.push({ type: 'r', icon: '🔴', msg: `<strong>Very low savings rate (${savingsRate.toFixed(0)}%).</strong> You're saving less than 5% of income. Aim for at least 10–20%.` });
+  else if (savingsRate < 15 && totalIncome > 0) flags.push({ type: 'a', icon: '🟡', msg: `<strong>Savings rate is ${savingsRate.toFixed(0)}%.</strong> Good start — try to push toward 20% if possible.` });
+  else if (savingsRate >= 20) flags.push({ type: 'g', icon: '🟢', msg: `<strong>Savings rate is ${savingsRate.toFixed(0)}% — great discipline.</strong> You're building wealth faster than most.` });
+
+  const spendVsIncome = totalIncome > 0 ? (totalSpend / totalIncome) * 100 : 0;
+  if (spendVsIncome > 90) flags.push({ type: 'r', icon: '🔴', msg: `<strong>Spending is ${spendVsIncome.toFixed(0)}% of income.</strong> Almost nothing left over — review categories urgently.` });
+  else if (spendVsIncome > 70) flags.push({ type: 'a', icon: '🟡', msg: `<strong>Spending is ${spendVsIncome.toFixed(0)}% of income.</strong> That leaves limited room for savings. Look for the biggest category to cut.` });
+
+  if (totalSpend > 0) {
+    const sorted = [...spend].sort((a,b) => b.amount - a.amount);
+    const top = sorted[0];
+    const topPct = (top.amount / totalSpend) * 100;
+    if (topPct > 35) flags.push({ type: 'a', icon: '🟡', msg: `<strong>${top.label} is your biggest spend at ${fmt(cur, top.amount)} (${topPct.toFixed(0)}% of all spending).</strong> One category dominating is worth watching.` });
+
+    spend.forEach(s => {
+      if (s.budget > 0 && s.amount > s.budget * 1.1) {
+        flags.push({ type: 'a', icon: '🟡', msg: `<strong>${s.label} over budget:</strong> ${fmt(cur, s.amount)} actual vs ${fmt(cur, s.budget)} budgeted (${((s.amount/s.budget-1)*100).toFixed(0)}% over).` });
+      }
+    });
+  }
+
+  if (flags.length === 0 && totalIncome > 0) flags.push({ type: 'g', icon: '🟢', msg: `<strong>No major flags this month.</strong> Spending looks balanced across categories.` });
+
+  return flags;
+}
+
+// ── Auto insights ─────────────────────────────────────────────────────────
+function autoInsights(data, totalIncome, totalSpend, totalSaved, savingsRate) {
+  const { cur, spend, goals, savings } = data;
+  const insights = [];
+
+  if (spend.length > 0 && totalSpend > 0) {
+    const top = [...spend].sort((a,b) => b.amount - a.amount)[0];
+    const topPct = (top.amount / totalSpend * 100).toFixed(0);
+    insights.push(`<strong>1. ${top.label} is your largest spend category</strong> at ${fmt(cur, top.amount)} (${topPct}% of spending). If you want to reduce total spend, this is the most impactful lever.`);
+  }
+
+  if (goals.length > 0) {
+    const notDone = goals.filter(g => g.current < g.target);
+    if (notDone.length > 0 && totalSaved > 0) {
+      const g = notDone[0];
+      const rem = g.target - g.current;
+      const months = totalSaved > 0 ? Math.ceil(rem / totalSaved) : '∞';
+      insights.push(`<strong>2. Goal: ${g.label}</strong> — ${fmt(cur, g.current)} of ${fmt(cur, g.target)} (${((g.current/g.target)*100).toFixed(0)}%). At ${fmt(cur, totalSaved)}/month saved, you're ~${months} months away from hitting it.`);
+    }
+  }
+
+  if (totalIncome > 0) {
+    const leftover = totalIncome - totalSpend - totalSaved;
+    if (leftover > 0) insights.push(`<strong>3. Unaccounted ${fmt(cur, leftover)}:</strong> After spending and savings, there's ${fmt(cur, leftover)} that isn't tracked. Consider where it's going — or route it to a goal.`);
+  }
+
+  return insights;
+}
+
+// ── Build dashboard ───────────────────────────────────────────────────────
+let spendChart = null;
+
+function buildDashboard() {
+  const data = readData();
+  const { cur, period, income, spend, savings, nw, goals } = data;
+
+  const totalIncome = income.reduce((s,r) => s + r.amount, 0);
+  const totalSpend = spend.reduce((s,r) => s + r.amount, 0);
+  const totalSaved = savings.reduce((s,r) => s + r.amount, 0);
+  const totalNW = nw.reduce((s,r) => s + r.amount, 0);
+  const savingsRate = totalIncome > 0 ? (totalSaved / totalIncome) * 100 : 0;
+  const totalBudget = spend.reduce((s,r) => s + r.budget, 0);
+
+  const spendMax = spend.length > 0 ? Math.max(...spend.map(r => r.amount)) : 1;
+
+  // Verdict
+  let verdictText, verdictClass;
+  if (savingsRate >= 20 && (totalBudget === 0 || totalSpend <= totalBudget)) { verdictText = 'On track 🟢'; verdictClass = 'green'; }
+  else if (savingsRate >= 10) { verdictText = 'Mostly on track ⚠️'; verdictClass = 'amber'; }
+  else if (totalIncome === 0) { verdictText = 'Add income data'; verdictClass = 'amber'; }
+  else { verdictText = 'Needs attention 🔴'; verdictClass = 'red'; }
+
+  // Flags & insights
+  const flags = autoFlags(data, totalIncome, totalSpend, totalSaved, savingsRate);
+  const insights = autoInsights(data, totalIncome, totalSpend, totalSaved, savingsRate);
+
+  // Spending chart data
+  const chartLabels = spend.map(s => s.label.replace(/^[^\w]*/, '').trim().substring(0,15));
+  const chartData = spend.map(s => s.amount);
+  const chartColors = spend.map((s,i) => BAR_COLORS[i % BAR_COLORS.length]);
+
+  const html = `
+  <div class="dash-header">
     <div>
-      <h1>May 2026 — Financial Review</h1>
-      <div class="subtitle">Abhishek Majumdar · NatWest + Trading 212 ISA · Generated 2 Jun 2026</div>
+      <h1>${esc(period)} — Financial Dashboard</h1>
+      <div class="sub">Generated ${new Date().toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'})}</div>
     </div>
-    <div class="verdict amber">Overspent vs budget — but savings on track ⚠️</div>
-  </div>
-</div>
-
-<div class="kpi-row">
-  <div class="kpi">
-    <div class="label">Total Income</div>
-    <div class="value blue">£3,772</div>
-    <div class="sub">£2,000 CHAPS + £1,705 Post Office + misc</div>
-  </div>
-  <div class="kpi">
-    <div class="label">Total Spending</div>
-    <div class="value amber">£1,548</div>
-    <div class="sub">vs £1,624 budget · under by £76</div>
-  </div>
-  <div class="kpi">
-    <div class="label">Saved / Invested</div>
-    <div class="value green">£870</div>
-    <div class="sub">T212 ISA £600 · Saver £150 · Round-ups £120</div>
-  </div>
-  <div class="kpi">
-    <div class="label">Net Worth</div>
-    <div class="value purple">£34,937</div>
-    <div class="sub">ISA now £5,593 · Cash ISA £25,000</div>
-  </div>
-  <div class="kpi">
-    <div class="label">Savings Rate</div>
-    <div class="value green">23%</div>
-    <div class="sub">of parental support income</div>
-  </div>
-</div>
-
-<div class="main">
-
-  <!-- Spending Breakdown -->
-  <div class="card">
-    <h2>Spending by Category</h2>
-
-    <div class="cat-row">
-      <div class="cat-label">🍜 Dining Out</div>
-      <div class="cat-bar-wrap"><div class="cat-bar" style="width:100%; background:#fc8181;"></div></div>
-      <div class="cat-amount red">£629</div>
-      <div class="cat-pct">41%</div>
-    </div>
-    <div class="cat-row">
-      <div class="cat-label">👥 Shared Costs</div>
-      <div class="cat-bar-wrap"><div class="cat-bar" style="width:39%; background:#f6ad55;"></div></div>
-      <div class="cat-amount amber">£248</div>
-      <div class="cat-pct">16%</div>
-    </div>
-    <div class="cat-label" style="font-size:10px;color:#718096;padding-left:0;margin-bottom:8px;margin-top:-6px;">↑ Payments to JOSH, Reyan, Uday (shared dinners/costs)</div>
-    <div class="cat-row">
-      <div class="cat-label">📱 Subscriptions</div>
-      <div class="cat-bar-wrap"><div class="cat-bar" style="width:23%; background:#f6ad55;"></div></div>
-      <div class="cat-amount amber">£149</div>
-      <div class="cat-pct">10%</div>
-    </div>
-    <div class="cat-row">
-      <div class="cat-label">🛒 Groceries</div>
-      <div class="cat-bar-wrap"><div class="cat-bar" style="width:18%; background:#68d391;"></div></div>
-      <div class="cat-amount green">£118</div>
-      <div class="cat-pct">8%</div>
-    </div>
-    <div class="cat-row">
-      <div class="cat-label">🎾 Entertainment</div>
-      <div class="cat-bar-wrap"><div class="cat-bar" style="width:13%; background:#63b3ed;"></div></div>
-      <div class="cat-amount blue">£85</div>
-      <div class="cat-pct">5%</div>
-    </div>
-    <div class="cat-row">
-      <div class="cat-label">🚗 Transport</div>
-      <div class="cat-bar-wrap"><div class="cat-bar" style="width:11%; background:#63b3ed;"></div></div>
-      <div class="cat-amount blue">£72</div>
-      <div class="cat-pct">5%</div>
-    </div>
-    <div class="cat-row">
-      <div class="cat-label">🛍️ Other</div>
-      <div class="cat-bar-wrap"><div class="cat-bar" style="width:3%; background:#718096;"></div></div>
-      <div class="cat-amount" style="color:#718096;">£47</div>
-      <div class="cat-pct">3%</div>
-    </div>
-
-    <div class="divider"></div>
-    <div style="display:flex;justify-content:space-between;font-size:13px;">
-      <span style="color:#718096;">Total spending</span>
-      <span style="font-weight:700;color:#e2e8f0;">£1,348 <span style="color:#718096;font-weight:400;">(excl. shared costs)</span></span>
-    </div>
+    <div class="verdict ${verdictClass}">${verdictText}</div>
   </div>
 
-  <!-- Goals Tracker -->
-  <div class="card">
-    <h2>Goals Tracker</h2>
-
-    <div class="goal-row">
-      <div class="goal-header">
-        <span class="goal-name">🟢 Emergency Fund</span>
-        <span class="goal-pct green">117% — Achieved</span>
-      </div>
-      <div class="goal-bar-wrap"><div class="goal-bar" style="width:100%;background:#68d391;"></div></div>
-      <div class="goal-detail">£3,864 / £3,300 — maintain this floor</div>
-    </div>
-
-    <div class="goal-row">
-      <div class="goal-header">
-        <span class="goal-name">🔵 Cash ISA</span>
-        <span class="goal-pct green">100% — Achieved</span>
-      </div>
-      <div class="goal-bar-wrap"><div class="goal-bar" style="width:100%;background:#68d391;"></div></div>
-      <div class="goal-detail">£25,000 / £25,000 — frozen, do not touch</div>
-    </div>
-
-    <div class="goal-row">
-      <div class="goal-header">
-        <span class="goal-name">📈 S&S ISA — Phase 1</span>
-        <span class="goal-pct blue">28%</span>
-      </div>
-      <div class="goal-bar-wrap"><div class="goal-bar" style="width:28%;background:#63b3ed;"></div></div>
-      <div class="goal-detail">£5,593 / £20,000 — deposited £600 in May · ~30 months to go</div>
-    </div>
-
-    <div class="goal-row">
-      <div class="goal-header">
-        <span class="goal-name">💰 Digital Regular Saver</span>
-        <span class="goal-pct amber">13.5%</span>
-      </div>
-      <div class="goal-bar-wrap"><div class="goal-bar" style="width:13.5%;background:#f6ad55;"></div></div>
-      <div class="goal-detail">£673 / £5,000 — auto £150/mo + round-ups · ~29 months to go</div>
-    </div>
-
-    <div class="goal-row" style="margin-bottom:0;">
-      <div class="goal-header">
-        <span class="goal-name">🎯 ISA Annual Max</span>
-        <span class="goal-pct amber">27%</span>
-      </div>
-      <div class="goal-bar-wrap"><div class="goal-bar" style="width:27%;background:#b794f4;"></div></div>
-      <div class="goal-detail">£5,593 / £20,000 · £2,742 used of ISA allowance · £17,258 remaining</div>
-    </div>
+  <div class="kpi-row">
+    <div class="kpi"><div class="lbl">Total Income</div><div class="val blue">${fmt(cur, totalIncome)}</div><div class="sub">${income.map(r => r.label).join(' · ') || '—'}</div></div>
+    <div class="kpi"><div class="lbl">Total Spending</div><div class="val ${totalBudget>0&&totalSpend>totalBudget?'red':'amber'}">${fmt(cur, totalSpend)}</div><div class="sub">${totalBudget>0 ? `vs ${fmt(cur,totalBudget)} budget` : `${spend.length} categories`}</div></div>
+    <div class="kpi"><div class="lbl">Saved / Invested</div><div class="val green">${fmt(cur, totalSaved)}</div><div class="sub">${savings.map(r => r.label).join(' · ') || '—'}</div></div>
+    ${totalNW > 0 ? `<div class="kpi"><div class="lbl">Net Worth</div><div class="val purple">${fmt(cur, totalNW)}</div><div class="sub">${nw.length} account${nw.length!==1?'s':''}</div></div>` : ''}
+    <div class="kpi"><div class="lbl">Savings Rate</div><div class="val ${savingsRate>=20?'green':savingsRate>=10?'amber':'red'}">${savingsRate.toFixed(0)}%</div><div class="sub">of total income</div></div>
+    ${totalIncome>0&&totalSpend>0 ? `<div class="kpi"><div class="lbl">Left Over</div><div class="val ${totalIncome-totalSpend-totalSaved>=0?'green':'red'}">${fmt(cur, totalIncome-totalSpend-totalSaved)}</div><div class="sub">after spend & savings</div></div>` : ''}
   </div>
 
-  <!-- ISA Positions -->
-  <div class="card">
-    <h2>S&S ISA — Open Positions (31 May)</h2>
+  <div class="dash-main">
 
-    <div class="position-row">
-      <div class="pos-ticker">DUOL</div>
-      <div class="pos-name">Duolingo</div>
-      <div class="pos-return red">-£310</div>
-      <div class="pos-value">£2,255</div>
-    </div>
-    <div class="position-row">
-      <div class="pos-ticker">META</div>
-      <div class="pos-name">Meta Platforms</div>
-      <div class="pos-return green">+£60</div>
-      <div class="pos-value">£2,364</div>
-    </div>
-    <div class="position-row">
-      <div class="pos-ticker">SPGI</div>
-      <div class="pos-name">S&P Global</div>
-      <div class="pos-return green">+£8</div>
-      <div class="pos-value">£407</div>
-    </div>
-    <div class="position-row">
-      <div class="pos-ticker">VWRP</div>
-      <div class="pos-name">Vanguard All-World (GBP)</div>
-      <div class="pos-return green">+£2</div>
-      <div class="pos-value">£112</div>
-    </div>
-    <div class="position-row">
-      <div class="pos-ticker">VFEG</div>
-      <div class="pos-name">Vanguard EM (GBP)</div>
-      <div class="pos-return green">+£1</div>
-      <div class="pos-value">£56</div>
-    </div>
-    <div class="position-row">
-      <div class="pos-ticker">VEUA</div>
-      <div class="pos-name">Vanguard Europe (GBP)</div>
-      <div class="pos-return green">+£1</div>
-      <div class="pos-value">£56</div>
-    </div>
-    <div class="divider"></div>
-    <div style="display:flex;justify-content:space-between;font-size:13px;">
-      <span style="color:#718096;">ISA Total Value</span>
-      <span style="font-weight:700;color:#e2e8f0;">£5,593 <span style="color:#68d391;font-size:11px;">↑ £193 from £5,400</span></span>
-    </div>
-    <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:6px;">
-      <span style="color:#718096;">Unrealised P&L</span>
-      <span style="color:#fc8181;">-£238 (open result, mostly DUOL)</span>
-    </div>
-    <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:4px;">
-      <span style="color:#718096;">Cash + QMMF in ISA</span>
-      <span style="color:#e2e8f0;">£342 cash · £51 QMMF</span>
-    </div>
-  </div>
+    ${spend.length > 0 ? `
+    <div class="card">
+      <h2>Spending by Category</h2>
+      ${spend.map((s,i) => {
+        const pct = totalSpend > 0 ? (s.amount / totalSpend * 100) : 0;
+        const barW = spendMax > 0 ? (s.amount / spendMax * 100) : 0;
+        const col = catColor(pct, i);
+        const cls = catCss(pct, i);
+        return `<div class="cat-row">
+          <div class="cat-lbl">${esc(s.label)}</div>
+          <div class="bar-wrap"><div class="bar" style="width:${barW}%;background:${col};"></div></div>
+          <div class="cat-amt ${cls}">${fmt(cur, s.amount)}</div>
+          <div class="cat-pct">${pct.toFixed(0)}%</div>
+        </div>`;
+      }).join('')}
+      <div class="divider"></div>
+      <div class="row-sb"><span>Total spending</span><span>${fmt(cur, totalSpend)}</span></div>
+      ${totalBudget > 0 ? `<div class="row-sb"><span>Total budget</span><span class="${totalSpend>totalBudget?'red':'green'}">${fmt(cur, totalBudget)}</span></div>` : ''}
+    </div>` : '<div class="card"><h2>Spending by Category</h2><p style="color:#4a5568;font-size:13px;">No spending data entered.</p></div>'}
 
-  <!-- Flags & Alerts -->
-  <div class="card">
-    <h2>Flags & Alerts</h2>
+    ${goals.length > 0 ? `
+    <div class="card">
+      <h2>Goals Tracker</h2>
+      ${goals.map(g => {
+        const pct = g.target > 0 ? Math.min((g.current / g.target) * 100, 100) : 0;
+        const col = goalColor(pct);
+        const done = pct >= 100;
+        return `<div class="goal-row">
+          <div class="goal-hdr">
+            <span class="goal-name">${esc(g.label)}</span>
+            <span class="goal-pct" style="color:${col}">${pct.toFixed(0)}%${done?' — Achieved':''}</span>
+          </div>
+          <div class="goal-bar-wrap"><div class="goal-bar" style="width:${pct}%;background:${col};"></div></div>
+          <div class="goal-detail">${fmt(cur, g.current)} / ${fmt(cur, g.target)}</div>
+        </div>`;
+      }).join('')}
+    </div>` : ''}
 
-    <div class="flag red-flag">
-      <div class="icon">🔴</div>
-      <div class="text"><strong>Double Anthropic charge:</strong> Two separate £24 deductions on 7 May (£48 total). Your plan should be ~£17/mo on an annual plan. Check your Anthropic billing — you may have two accounts or were charged for a plan change.</div>
+    ${spend.length > 1 ? `
+    <div class="card">
+      <h2>Spending Breakdown</h2>
+      <div class="chart-wrap"><canvas id="spendChart"></canvas></div>
+    </div>` : ''}
+
+    <div class="card ${flags.length > 3 ? 'full' : ''}">
+      <h2>Flags & Alerts</h2>
+      ${flags.map(f => `<div class="flag ${f.type}"><div class="icon">${f.icon}</div><div class="txt">${f.msg}</div></div>`).join('')}
     </div>
 
-    <div class="flag red-flag">
-      <div class="icon">🔴</div>
-      <div class="text"><strong>Subscriptions 2× over budget:</strong> £149 actual vs £74 budgeted. Extra items: NOW/Sky Sports (£14.99), Canva (£13), Base44 (£15.18), plus the double Anthropic. Review and cut what you're not actively using.</div>
-    </div>
-
-    <div class="flag amber-flag">
-      <div class="icon">🟡</div>
-      <div class="text"><strong>Dining out is your biggest spend at £629</strong> — that's 42% of all spending and well above the £500 living costs estimate. Wagamama alone: £146 this month across three visits.</div>
-    </div>
-
-    <div class="flag amber-flag">
-      <div class="icon">🟡</div>
-      <div class="text"><strong>Unusual credit — Post Office £1,705 (26 May):</strong> This is a large unclassified credit. If it's an additional parental transfer, the inputs model doesn't account for it. Worth noting for net worth tracking.</div>
-    </div>
-
-    <div class="flag amber-flag">
-      <div class="icon">🟡</div>
-      <div class="text"><strong>DUOL unrealised loss of -£310:</strong> You bought heavily in May at £103–114 and the position is now underwater. Not an action item today, but monitor — you sold significant chunks at a loss this month (realised -£577 per T212 statement).</div>
-    </div>
-  </div>
-
-  <!-- Insights -->
-  <div class="card full-width">
-    <h2>Insights & Suggestions</h2>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
-      <div>
-        <div class="insight">
-          <p><strong>1. Food is the biggest lever.</strong> Dining out at £629 is nearly the entire £500 living cost budget on its own — before groceries, transport, or anything else. Three Wagamama visits (£146), SP FOODERY (£66), Simmer Eats (£87), and LS KONG (£90) make up £389 between them. Cutting two restaurant meals a week to home cooking could save £150–200/month.</p>
+    ${insights.length > 0 ? `
+    <div class="card full">
+      <h2>Insights</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          ${insights.slice(0,2).map(i => `<div class="insight"><p>${i}</p></div>`).join('')}
         </div>
-        <div class="insight">
-          <p><strong>2. Subscription audit needed.</strong> You're paying for NOW/Sky Sports (£14.99), Canva (£13), and Base44 (£15.18) that weren't in your model. Combined with the double Anthropic charge, that's ~£58/month unbudgeted. A 20-minute review could free up £40–50/month immediately.</p>
-        </div>
-        <div class="insight">
-          <p><strong>3. ISA strategy is active and that's a good thing.</strong> You deposited £600 into the ISA in May and made deliberate trades — rotating out of DUOL into META and starting positions in SPGI, VWRP, VFEG, VEUA. The ETF additions (VWRP/VFEG/VEUA) signal good long-term thinking alongside the individual stocks.</p>
+        <div>
+          ${insights.slice(2).map(i => `<div class="insight"><p>${i}</p></div>`).join('')}
+          ${savingsRate >= 15 ? `<div class="win-box"><div class="wt">🏆 Keep it up</div><p>A ${savingsRate.toFixed(0)}% savings rate puts you ahead of most people. Consistency over time is how wealth compounds — stay the course.</p></div>` : ''}
         </div>
       </div>
-      <div>
-        <div class="insight">
-          <p><strong>Suggestion 1 — Fix the Anthropic billing.</strong> You were charged £48 instead of £17. Log in to console.anthropic.com and check your billing page. If you have two subscriptions, cancel the duplicate. That's ~£30 of immediate savings.</p>
-        </div>
-        <div class="insight">
-          <p><strong>Suggestion 2 — Set a weekly dining budget.</strong> With Deloitte starting in September, you'll need to shift to a tighter £500/month total living cost. Practising now — say £80/week for all food — will make the transition easier and let you save more before the start date.</p>
-        </div>
+    </div>` : ''}
 
-        <div class="win-box">
-          <div class="win-title">🏆 Win of the Month</div>
-          <p>You hit your savings target despite a busy month. £870 deployed into savings and investments (ISA + Digital Saver + round-ups), keeping your ISA Phase 1 progress on track at 28%. The automatic round-up transfers are quietly building £120+/month in savings you don't even notice — keep that running.</p>
-        </div>
-      </div>
-    </div>
-  </div>
+  </div>`;
 
-</div>
+  document.getElementById('dashContent').innerHTML = html;
+  switchTab('dashboard');
 
+  // Draw chart
+  if (spend.length > 1 && totalSpend > 0) {
+    const ctx = document.getElementById('spendChart');
+    if (ctx) {
+      if (spendChart) { spendChart.destroy(); spendChart = null; }
+      spendChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: chartLabels,
+          datasets: [{ data: chartData, backgroundColor: chartColors, borderColor: '#1a1f2e', borderWidth: 2 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'right', labels: { color: '#cbd5e0', font: { size: 11 }, boxWidth: 12, padding: 8 } },
+            tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${cur}${ctx.parsed.toLocaleString()}` } }
+          }
+        }
+      });
+    }
+  }
+}
+
+// ── Tab switching ──────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  if (tab === 'input') {
+    document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+    document.getElementById('inputPanel').classList.add('active');
+  } else {
+    document.querySelector('.tab-btn:nth-child(3)').classList.add('active');
+    document.getElementById('dashPanel').classList.add('active');
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('currency').value = '£';
+  initDefaults();
+});
+</script>
 </body>
 </html>
