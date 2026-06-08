@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Financial Review — May 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; }
+
+  .header { background: linear-gradient(135deg, #1a1f2e 0%, #16213e 100%); border-bottom: 1px solid #2d3748; padding: 28px 32px 24px; }
+  .header-top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; }
+  .header h1 { font-size: 22px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+  .header .subtitle { font-size: 13px; color: #718096; margin-top: 2px; }
+  .verdict { padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+  .verdict.green { background: rgba(72,187,120,0.15); color: #68d391; border: 1px solid rgba(72,187,120,0.3); }
+  .verdict.amber { background: rgba(237,137,54,0.15); color: #f6ad55; border: 1px solid rgba(237,137,54,0.3); }
+
+  .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; padding: 24px 32px; background: #0f1117; }
+  .kpi { background: #1a1f2e; border: 1px solid #2d3748; border-radius: 10px; padding: 16px 18px; }
+  .kpi .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: #718096; margin-bottom: 6px; }
+  .kpi .value { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+  .kpi .sub { font-size: 11px; color: #718096; margin-top: 3px; }
+  .green { color: #68d391; }
+  .amber { color: #f6ad55; }
+  .red { color: #fc8181; }
+  .blue { color: #63b3ed; }
+  .purple { color: #b794f4; }
+
+  .main { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 0 32px 32px; }
+  @media (max-width: 900px) { .main { grid-template-columns: 1fr; } }
+
+  .card { background: #1a1f2e; border: 1px solid #2d3748; border-radius: 12px; padding: 22px; }
+  .card h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: #718096; margin-bottom: 18px; }
+  .card.full-width { grid-column: 1 / -1; }
+
+  /* Spending breakdown */
+  .cat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .cat-label { width: 160px; font-size: 13px; color: #cbd5e0; flex-shrink: 0; }
+  .cat-bar-wrap { flex: 1; background: #2d3748; border-radius: 4px; height: 8px; overflow: hidden; }
+  .cat-bar { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
+  .cat-amount { width: 65px; text-align: right; font-size: 13px; font-weight: 600; color: #e2e8f0; }
+  .cat-pct { width: 38px; text-align: right; font-size: 11px; color: #718096; }
+
+  /* Goals */
+  .goal-row { margin-bottom: 18px; }
+  .goal-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .goal-name { font-size: 13px; color: #cbd5e0; font-weight: 500; }
+  .goal-pct { font-size: 13px; font-weight: 700; }
+  .goal-bar-wrap { background: #2d3748; border-radius: 6px; height: 10px; overflow: hidden; margin-bottom: 4px; }
+  .goal-bar { height: 100%; border-radius: 6px; }
+  .goal-detail { font-size: 11px; color: #718096; }
+
+  /* Flags */
+  .flag { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 8px; margin-bottom: 10px; }
+  .flag.red-flag { background: rgba(252,129,129,0.08); border: 1px solid rgba(252,129,129,0.2); }
+  .flag.amber-flag { background: rgba(246,173,85,0.08); border: 1px solid rgba(246,173,85,0.2); }
+  .flag.green-flag { background: rgba(104,211,145,0.08); border: 1px solid rgba(104,211,145,0.2); }
+  .flag .icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .flag .text { font-size: 13px; line-height: 1.5; color: #cbd5e0; }
+  .flag .text strong { color: #e2e8f0; }
+
+  /* ISA positions */
+  .position-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #2d3748; }
+  .position-row:last-child { border-bottom: none; }
+  .pos-ticker { font-size: 13px; font-weight: 700; color: #e2e8f0; width: 60px; }
+  .pos-name { font-size: 12px; color: #718096; flex: 1; }
+  .pos-return { font-size: 13px; font-weight: 600; text-align: right; }
+  .pos-value { font-size: 13px; font-weight: 600; color: #e2e8f0; text-align: right; width: 75px; }
+
+  .divider { height: 1px; background: #2d3748; margin: 14px 0; }
+
+  .insight { padding: 10px 0; border-bottom: 1px solid #2d3748; }
+  .insight:last-child { border-bottom: none; }
+  .insight p { font-size: 13px; line-height: 1.6; color: #cbd5e0; }
+  .insight p strong { color: #e2e8f0; }
+
+  .win-box { background: linear-gradient(135deg, rgba(104,211,145,0.1), rgba(99,179,237,0.1)); border: 1px solid rgba(104,211,145,0.25); border-radius: 10px; padding: 16px 18px; margin-top: 6px; }
+  .win-box .win-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #68d391; margin-bottom: 6px; }
+  .win-box p { font-size: 13px; color: #cbd5e0; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <h1>May 2026 — Financial Review</h1>
+      <div class="subtitle">Abhishek Majumdar · NatWest + Trading 212 ISA · Generated 2 Jun 2026</div>
+    </div>
+    <div class="verdict amber">Overspent vs budget — but savings on track ⚠️</div>
+  </div>
+</div>
+
+<div class="kpi-row">
+  <div class="kpi">
+    <div class="label">Total Income</div>
+    <div class="value blue">£3,772</div>
+    <div class="sub">£2,000 CHAPS + £1,705 Post Office + misc</div>
+  </div>
+  <div class="kpi">
+    <div class="label">Total Spending</div>
+    <div class="value amber">£1,548</div>
+    <div class="sub">vs £1,624 budget · under by £76</div>
+  </div>
+  <div class="kpi">
+    <div class="label">Saved / Invested</div>
+    <div class="value green">£870</div>
+    <div class="sub">T212 ISA £600 · Saver £150 · Round-ups £120</div>
+  </div>
+  <div class="kpi">
+    <div class="label">Net Worth</div>
+    <div class="value purple">£34,937</div>
+    <div class="sub">ISA now £5,593 · Cash ISA £25,000</div>
+  </div>
+  <div class="kpi">
+    <div class="label">Savings Rate</div>
+    <div class="value green">23%</div>
+    <div class="sub">of parental support income</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Spending Breakdown -->
+  <div class="card">
+    <h2>Spending by Category</h2>
+
+    <div class="cat-row">
+      <div class="cat-label">🍜 Dining Out</div>
+      <div class="cat-bar-wrap"><div class="cat-bar" style="width:100%; background:#fc8181;"></div></div>
+      <div class="cat-amount red">£629</div>
+      <div class="cat-pct">41%</div>
+    </div>
+    <div class="cat-row">
+      <div class="cat-label">👥 Shared Costs</div>
+      <div class="cat-bar-wrap"><div class="cat-bar" style="width:39%; background:#f6ad55;"></div></div>
+      <div class="cat-amount amber">£248</div>
+      <div class="cat-pct">16%</div>
+    </div>
+    <div class="cat-label" style="font-size:10px;color:#718096;padding-left:0;margin-bottom:8px;margin-top:-6px;">↑ Payments to JOSH, Reyan, Uday (shared dinners/costs)</div>
+    <div class="cat-row">
+      <div class="cat-label">📱 Subscriptions</div>
+      <div class="cat-bar-wrap"><div class="cat-bar" style="width:23%; background:#f6ad55;"></div></div>
+      <div class="cat-amount amber">£149</div>
+      <div class="cat-pct">10%</div>
+    </div>
+    <div class="cat-row">
+      <div class="cat-label">🛒 Groceries</div>
+      <div class="cat-bar-wrap"><div class="cat-bar" style="width:18%; background:#68d391;"></div></div>
+      <div class="cat-amount green">£118</div>
+      <div class="cat-pct">8%</div>
+    </div>
+    <div class="cat-row">
+      <div class="cat-label">🎾 Entertainment</div>
+      <div class="cat-bar-wrap"><div class="cat-bar" style="width:13%; background:#63b3ed;"></div></div>
+      <div class="cat-amount blue">£85</div>
+      <div class="cat-pct">5%</div>
+    </div>
+    <div class="cat-row">
+      <div class="cat-label">🚗 Transport</div>
+      <div class="cat-bar-wrap"><div class="cat-bar" style="width:11%; background:#63b3ed;"></div></div>
+      <div class="cat-amount blue">£72</div>
+      <div class="cat-pct">5%</div>
+    </div>
+    <div class="cat-row">
+      <div class="cat-label">🛍️ Other</div>
+      <div class="cat-bar-wrap"><div class="cat-bar" style="width:3%; background:#718096;"></div></div>
+      <div class="cat-amount" style="color:#718096;">£47</div>
+      <div class="cat-pct">3%</div>
+    </div>
+
+    <div class="divider"></div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;">
+      <span style="color:#718096;">Total spending</span>
+      <span style="font-weight:700;color:#e2e8f0;">£1,348 <span style="color:#718096;font-weight:400;">(excl. shared costs)</span></span>
+    </div>
+  </div>
+
+  <!-- Goals Tracker -->
+  <div class="card">
+    <h2>Goals Tracker</h2>
+
+    <div class="goal-row">
+      <div class="goal-header">
+        <span class="goal-name">🟢 Emergency Fund</span>
+        <span class="goal-pct green">117% — Achieved</span>
+      </div>
+      <div class="goal-bar-wrap"><div class="goal-bar" style="width:100%;background:#68d391;"></div></div>
+      <div class="goal-detail">£3,864 / £3,300 — maintain this floor</div>
+    </div>
+
+    <div class="goal-row">
+      <div class="goal-header">
+        <span class="goal-name">🔵 Cash ISA</span>
+        <span class="goal-pct green">100% — Achieved</span>
+      </div>
+      <div class="goal-bar-wrap"><div class="goal-bar" style="width:100%;background:#68d391;"></div></div>
+      <div class="goal-detail">£25,000 / £25,000 — frozen, do not touch</div>
+    </div>
+
+    <div class="goal-row">
+      <div class="goal-header">
+        <span class="goal-name">📈 S&S ISA — Phase 1</span>
+        <span class="goal-pct blue">28%</span>
+      </div>
+      <div class="goal-bar-wrap"><div class="goal-bar" style="width:28%;background:#63b3ed;"></div></div>
+      <div class="goal-detail">£5,593 / £20,000 — deposited £600 in May · ~30 months to go</div>
+    </div>
+
+    <div class="goal-row">
+      <div class="goal-header">
+        <span class="goal-name">💰 Digital Regular Saver</span>
+        <span class="goal-pct amber">13.5%</span>
+      </div>
+      <div class="goal-bar-wrap"><div class="goal-bar" style="width:13.5%;background:#f6ad55;"></div></div>
+      <div class="goal-detail">£673 / £5,000 — auto £150/mo + round-ups · ~29 months to go</div>
+    </div>
+
+    <div class="goal-row" style="margin-bottom:0;">
+      <div class="goal-header">
+        <span class="goal-name">🎯 ISA Annual Max</span>
+        <span class="goal-pct amber">27%</span>
+      </div>
+      <div class="goal-bar-wrap"><div class="goal-bar" style="width:27%;background:#b794f4;"></div></div>
+      <div class="goal-detail">£5,593 / £20,000 · £2,742 used of ISA allowance · £17,258 remaining</div>
+    </div>
+  </div>
+
+  <!-- ISA Positions -->
+  <div class="card">
+    <h2>S&S ISA — Open Positions (31 May)</h2>
+
+    <div class="position-row">
+      <div class="pos-ticker">DUOL</div>
+      <div class="pos-name">Duolingo</div>
+      <div class="pos-return red">-£310</div>
+      <div class="pos-value">£2,255</div>
+    </div>
+    <div class="position-row">
+      <div class="pos-ticker">META</div>
+      <div class="pos-name">Meta Platforms</div>
+      <div class="pos-return green">+£60</div>
+      <div class="pos-value">£2,364</div>
+    </div>
+    <div class="position-row">
+      <div class="pos-ticker">SPGI</div>
+      <div class="pos-name">S&P Global</div>
+      <div class="pos-return green">+£8</div>
+      <div class="pos-value">£407</div>
+    </div>
+    <div class="position-row">
+      <div class="pos-ticker">VWRP</div>
+      <div class="pos-name">Vanguard All-World (GBP)</div>
+      <div class="pos-return green">+£2</div>
+      <div class="pos-value">£112</div>
+    </div>
+    <div class="position-row">
+      <div class="pos-ticker">VFEG</div>
+      <div class="pos-name">Vanguard EM (GBP)</div>
+      <div class="pos-return green">+£1</div>
+      <div class="pos-value">£56</div>
+    </div>
+    <div class="position-row">
+      <div class="pos-ticker">VEUA</div>
+      <div class="pos-name">Vanguard Europe (GBP)</div>
+      <div class="pos-return green">+£1</div>
+      <div class="pos-value">£56</div>
+    </div>
+    <div class="divider"></div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;">
+      <span style="color:#718096;">ISA Total Value</span>
+      <span style="font-weight:700;color:#e2e8f0;">£5,593 <span style="color:#68d391;font-size:11px;">↑ £193 from £5,400</span></span>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:6px;">
+      <span style="color:#718096;">Unrealised P&L</span>
+      <span style="color:#fc8181;">-£238 (open result, mostly DUOL)</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:4px;">
+      <span style="color:#718096;">Cash + QMMF in ISA</span>
+      <span style="color:#e2e8f0;">£342 cash · £51 QMMF</span>
+    </div>
+  </div>
+
+  <!-- Flags & Alerts -->
+  <div class="card">
+    <h2>Flags & Alerts</h2>
+
+    <div class="flag red-flag">
+      <div class="icon">🔴</div>
+      <div class="text"><strong>Double Anthropic charge:</strong> Two separate £24 deductions on 7 May (£48 total). Your plan should be ~£17/mo on an annual plan. Check your Anthropic billing — you may have two accounts or were charged for a plan change.</div>
+    </div>
+
+    <div class="flag red-flag">
+      <div class="icon">🔴</div>
+      <div class="text"><strong>Subscriptions 2× over budget:</strong> £149 actual vs £74 budgeted. Extra items: NOW/Sky Sports (£14.99), Canva (£13), Base44 (£15.18), plus the double Anthropic. Review and cut what you're not actively using.</div>
+    </div>
+
+    <div class="flag amber-flag">
+      <div class="icon">🟡</div>
+      <div class="text"><strong>Dining out is your biggest spend at £629</strong> — that's 42% of all spending and well above the £500 living costs estimate. Wagamama alone: £146 this month across three visits.</div>
+    </div>
+
+    <div class="flag amber-flag">
+      <div class="icon">🟡</div>
+      <div class="text"><strong>Unusual credit — Post Office £1,705 (26 May):</strong> This is a large unclassified credit. If it's an additional parental transfer, the inputs model doesn't account for it. Worth noting for net worth tracking.</div>
+    </div>
+
+    <div class="flag amber-flag">
+      <div class="icon">🟡</div>
+      <div class="text"><strong>DUOL unrealised loss of -£310:</strong> You bought heavily in May at £103–114 and the position is now underwater. Not an action item today, but monitor — you sold significant chunks at a loss this month (realised -£577 per T212 statement).</div>
+    </div>
+  </div>
+
+  <!-- Insights -->
+  <div class="card full-width">
+    <h2>Insights & Suggestions</h2>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <div>
+        <div class="insight">
+          <p><strong>1. Food is the biggest lever.</strong> Dining out at £629 is nearly the entire £500 living cost budget on its own — before groceries, transport, or anything else. Three Wagamama visits (£146), SP FOODERY (£66), Simmer Eats (£87), and LS KONG (£90) make up £389 between them. Cutting two restaurant meals a week to home cooking could save £150–200/month.</p>
+        </div>
+        <div class="insight">
+          <p><strong>2. Subscription audit needed.</strong> You're paying for NOW/Sky Sports (£14.99), Canva (£13), and Base44 (£15.18) that weren't in your model. Combined with the double Anthropic charge, that's ~£58/month unbudgeted. A 20-minute review could free up £40–50/month immediately.</p>
+        </div>
+        <div class="insight">
+          <p><strong>3. ISA strategy is active and that's a good thing.</strong> You deposited £600 into the ISA in May and made deliberate trades — rotating out of DUOL into META and starting positions in SPGI, VWRP, VFEG, VEUA. The ETF additions (VWRP/VFEG/VEUA) signal good long-term thinking alongside the individual stocks.</p>
+        </div>
+      </div>
+      <div>
+        <div class="insight">
+          <p><strong>Suggestion 1 — Fix the Anthropic billing.</strong> You were charged £48 instead of £17. Log in to console.anthropic.com and check your billing page. If you have two subscriptions, cancel the duplicate. That's ~£30 of immediate savings.</p>
+        </div>
+        <div class="insight">
+          <p><strong>Suggestion 2 — Set a weekly dining budget.</strong> With Deloitte starting in September, you'll need to shift to a tighter £500/month total living cost. Practising now — say £80/week for all food — will make the transition easier and let you save more before the start date.</p>
+        </div>
+
+        <div class="win-box">
+          <div class="win-title">🏆 Win of the Month</div>
+          <p>You hit your savings target despite a busy month. £870 deployed into savings and investments (ISA + Digital Saver + round-ups), keeping your ISA Phase 1 progress on track at 28%. The automatic round-up transfers are quietly building £120+/month in savings you don't even notice — keep that running.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
